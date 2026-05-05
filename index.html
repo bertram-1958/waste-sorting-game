@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แยกดีมีแต้ม | Time Challenge</title>
+
+<style>
+:root{
+  --green-ci:#7bc400;
+  --red-ci:#fe0121;
+  --black:#000000;
+  --white:#ffffff;
+  --gray:#eaeaea;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:Arial,"Noto Sans Thai",sans-serif;
+  background:#ffffff;
+  color:var(--black);
+}
+
+.app{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  margin:auto;
+  padding:20px;
+  background:#ffffff;
+}
+
+.page{display:none}
+.page.active{display:block}
+
+.game-logo{
+  width:min(76vw,300px);
+  display:block;
+  margin:22px auto 18px;
+}
+
+.title{
+  text-align:center;
+  font-size:28px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.subtitle{
+  text-align:center;
+  color:var(--green-ci);
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:22px;
+}
+
+.input{
+  width:100%;
+  padding:16px;
+  border-radius:30px;
+  border:2px solid var(--gray);
+  text-align:center;
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+.info{
+  border:2px dashed var(--green-ci);
+  border-radius:22px;
+  padding:18px;
+  text-align:center;
+  font-size:17px;
+  font-weight:800;
+  line-height:1.55;
+  margin-bottom:18px;
+  background:#fbfff4;
+}
+
+.btn{
+  width:100%;
+  padding:18px;
+  border:none;
+  border-radius:24px;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.primary{
+  background:var(--green-ci);
+  color:var(--black);
+}
+
+.secondary{
+  background:var(--white);
+  color:var(--black);
+  border:2px solid var(--black);
+  margin-top:12px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.stat{
+  border:2px solid var(--gray);
+  border-radius:18px;
+  text-align:center;
+  padding:10px 4px;
+}
+
+.stat h3{
+  font-size:12px;
+  color:#777;
+  margin-bottom:6px;
+}
+
+.stat p{
+  font-size:24px;
+  font-weight:900;
+}
+
+.progress{
+  width:100%;
+  height:10px;
+  border-radius:20px;
+  overflow:hidden;
+  background:#eeeeee;
+  margin-bottom:22px;
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:var(--green-ci);
+  transition:width .2s ease;
+}
+
+.card{
+  border:4px solid var(--black);
+  border-radius:26px;
+  padding:34px 12px;
+  text-align:center;
+  margin-bottom:18px;
+}
+
+.card small{
+  color:#777;
+  font-size:17px;
+  font-weight:900;
+}
+
+.card h1{
+  font-size:42px;
+  font-weight:900;
+  margin-top:10px;
+  word-break:keep-all;
+}
+
+.feedback{
+  min-height:28px;
+  text-align:center;
+  font-size:17px;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+.correct{color:var(--green-ci)}
+.wrong{color:var(--red-ci)}
+
+.bin{
+  width:100%;
+  padding:17px 10px;
+  margin-bottom:10px;
+  border:none;
+  border-radius:20px;
+  color:#fff;
+  font-size:19px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 6px 0 rgba(0,0,0,.22);
+}
+
+.bin:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,.22);
+}
+
+.green-bin{background:#2f7d57}
+.blue-bin{background:#2454d6}
+.yellow-bin{background:#f4c300}
+.red-bin{background:#c91f1f}
+
+.result-box{
+  border:4px solid var(--black);
+  border-radius:26px;
+  padding:28px 16px;
+  text-align:center;
+  margin:20px 0;
+}
+
+.result-name{
+  color:var(--green-ci);
+  font-size:30px;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+.result-label{
+  color:#777;
+  font-size:18px;
+  font-weight:900;
+}
+
+.time-big{
+  font-size:76px;
+  font-weight:900;
+  line-height:1;
+  margin:16px 0 20px;
+}
+
+.result-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  border-top:2px solid var(--gray);
+  padding-top:18px;
+}
+
+.result-grid strong{
+  font-size:30px;
+}
+
+.result-grid span{
+  display:block;
+  color:#777;
+  font-weight:900;
+  margin-top:4px;
+}
+
+.note{
+  background:#fff2f4;
+  border:2px solid var(--red-ci);
+  color:var(--red-ci);
+  border-radius:20px;
+  padding:16px;
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:14px;
+}
+
+@media(max-width:360px){
+  .app{padding:16px 12px}
+  .game-logo{width:min(78vw,250px)}
+  .card h1{font-size:34px}
+  .time-big{font-size:62px}
+  .bin{font-size:17px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<section id="startPage" class="page active">
+  <img src="images/logo.png" class="game-logo" alt="แยกดีมีแต้ม Logo">
+
+  <div class="title">แยกดีมีแต้ม</div>
+  <div class="subtitle">Waste Sorting Time Challenge</div>
+
+  <input id="playerInput" class="input" placeholder="ชื่อ / ทีม / แผนก">
+
+  <div class="info">
+    ภารกิจ: แยกขยะให้ครบทุกข้อ<br>
+    ใครใช้เวลาน้อยที่สุดเป็นผู้ชนะ<br>
+    ตอบผิดโดนบวกเวลา +2 วินาที
+  </div>
+
+  <button class="btn primary" onclick="startGame()">เริ่มเกมเลย</button>
+</section>
+
+<section id="gamePage" class="page">
+  <div class="stats">
+    <div class="stat">
+      <h3>เวลา</h3>
+      <p id="timerText">0.00s</p>
+    </div>
+    <div class="stat">
+      <h3>ข้อ</h3>
+      <p id="questionCount">1/1</p>
+    </div>
+    <div class="stat">
+      <h3>ผิด</h3>
+      <p id="wrongCount">0</p>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div id="progressBar" class="bar"></div>
+  </div>
+
+  <div class="card">
+    <small>ขยะชิ้นนี้คือ...</small>
+    <h1 id="trashText">ก้างปลา</h1>
+  </div>
+
+  <div id="feedbackText" class="feedback"></div>
+
+  <button class="bin green-bin" onclick="chooseBin('green')">
+    ถังสีเขียว (ย่อยสลายได้)
+  </button>
+
+  <button class="bin blue-bin" onclick="chooseBin('blue')">
+    ถังน้ำเงิน (ขยะทั่วไป)
+  </button>
+
+  <button class="bin yellow-bin" onclick="chooseBin('yellow')">
+    ถังเหลือง (รีไซเคิล)
+  </button>
+
+  <button class="bin red-bin" onclick="chooseBin('redChemical')">
+    ถังแดง (ขยะมีสารเคมี)
+  </button>
+
+  <button class="bin red-bin" onclick="chooseBin('redInfectious')">
+    ถังแดง (ขยะติดเชื้อ)
+  </button>
+</section>
+
+<section id="resultPage" class="page">
+  <img src="images/logo.png" class="game-logo" alt="แยกดีมีแต้ม Logo">
+
+  <div class="result-box">
+    <div class="result-label">ผู้เล่น</div>
+    <div id="resultName" class="result-name">BG</div>
+
+    <div class="result-label">เวลารวมของคุณ</div>
+    <div id="finalTime" class="time-big">0.00s</div>
+
+    <div class="result-grid">
+      <div>
+        <strong id="correctResult">0</strong>
+        <span>แยกถูก</span>
+      </div>
+      <div>
+        <strong id="wrongResult">0</strong>
+        <span>แยกผิด</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    📸 แคปหน้าจอผลลัพธ์ เพื่อร่วมจัดอันดับผู้ใช้เวลาน้อยที่สุด
+  </div>
+
+  <button class="btn primary" onclick="restartGame()">เล่นอีกครั้ง</button>
+  <button class="btn secondary" onclick="goToStart()">กลับหน้าแรก</button>
+</section>
+
+</div>
+
+<script>
+const questions = [
+  { item:"ก้างปลา", bin:"green" },
+  { item:"เศษข้าว", bin:"green" },
+  { item:"เปลือกกล้วย", bin:"green" },
+  { item:"เปลือกไข่", bin:"green" },
+  { item:"เศษผัก", bin:"green" },
+
+  { item:"ทิชชู่เปื้อนอาหาร", bin:"blue" },
+  { item:"ซองขนม", bin:"blue" },
+  { item:"หลอดพลาสติก", bin:"blue" },
+  { item:"กล่องโฟมเปื้อนอาหาร", bin:"blue" },
+  { item:"ถุงพลาสติกเปื้อนอาหาร", bin:"blue" },
+
+  { item:"ขวดน้ำพลาสติก", bin:"yellow" },
+  { item:"กระป๋องอลูมิเนียม", bin:"yellow" },
+  { item:"กระดาษสะอาด", bin:"yellow" },
+  { item:"กล่องกระดาษสะอาด", bin:"yellow" },
+  { item:"ขวดแก้ว", bin:"yellow" },
+
+  { item:"ถ่านไฟฉาย", bin:"redChemical" },
+  { item:"หลอดไฟเสีย", bin:"redChemical" },
+  { item:"กระป๋องสเปรย์", bin:"redChemical" },
+  { item:"ขวดน้ำยาทำความสะอาด", bin:"redChemical" },
+
+  { item:"หน้ากากอนามัยใช้แล้ว", bin:"redInfectious" },
+  { item:"ถุงมือเปื้อนสารคัดหลั่ง", bin:"redInfectious" },
+  { item:"สำลีเปื้อนเลือด", bin:"redInfectious" }
+];
+
+let playerName = "BG";
+let shuffledQuestions = [];
+let currentIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let penaltySeconds = 0;
+let startTime = 0;
+let timerInterval = null;
+let locked = false;
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function shuffleArray(array){
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+function startGame(){
+  playerName = document.getElementById("playerInput").value.trim() || "BG";
+
+  shuffledQuestions = shuffleArray(questions);
+  currentIndex = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  penaltySeconds = 0;
+  locked = false;
+
+  startTime = Date.now();
+
+  showPage("gamePage");
+  showQuestion();
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 40);
+}
+
+function updateTimer(){
+  const elapsed = (Date.now() - startTime) / 1000 + penaltySeconds;
+  document.getElementById("timerText").innerText = elapsed.toFixed(2) + "s";
+}
+
+function showQuestion(){
+  if(currentIndex >= shuffledQuestions.length){
+    endGame();
+    return;
+  }
+
+  locked = false;
+
+  const current = shuffledQuestions[currentIndex];
+  document.getElementById("trashText").innerText = current.item;
+  document.getElementById("questionCount").innerText =
+    (currentIndex + 1) + "/" + shuffledQuestions.length;
+  document.getElementById("wrongCount").innerText = wrongCount;
+
+  const progress = (currentIndex / shuffledQuestions.length) * 100;
+  document.getElementById("progressBar").style.width = progress + "%";
+
+  const feedback = document.getElementById("feedbackText");
+  feedback.innerText = "";
+  feedback.className = "feedback";
+}
+
+function chooseBin(selectedBin){
+  if(locked) return;
+  locked = true;
+
+  const current = shuffledQuestions[currentIndex];
+  const feedback = document.getElementById("feedbackText");
+
+  if(selectedBin === current.bin){
+    correctCount++;
+    feedback.innerText = "ถูกต้อง!";
+    feedback.className = "feedback correct";
+  }else{
+    wrongCount++;
+    penaltySeconds += 2;
+    feedback.innerText = "ผิดถัง +2s";
+    feedback.className = "feedback wrong";
+  }
+
+  document.getElementById("wrongCount").innerText = wrongCount;
+  currentIndex++;
+
+  setTimeout(showQuestion, 350);
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+
+  const finalTime = (Date.now() - startTime) / 1000 + penaltySeconds;
+
+  document.getElementById("progressBar").style.width = "100%";
+  document.getElementById("resultName").innerText = playerName;
+  document.getElementById("finalTime").innerText = finalTime.toFixed(2) + "s";
+  document.getElementById("correctResult").innerText = correctCount;
+  document.getElementById("wrongResult").innerText = wrongCount;
+
+  showPage("resultPage");
+}
+
+function restartGame(){
+  startGame();
+}
+
+function goToStart(){
+  clearInterval(timerInterval);
+  showPage("startPage");
+}
+</script>
+
+</body>
+</html>
