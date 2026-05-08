@@ -231,9 +231,9 @@ body{
 }
 
 .time-big{
-  font-size:76px;
+  font-size:52px;
   font-weight:900;
-  line-height:1;
+  line-height:1.15;
   margin:16px 0 20px;
 }
 
@@ -299,7 +299,7 @@ body{
 
 .board-row{
   display:grid;
-  grid-template-columns:42px 1fr 88px;
+  grid-template-columns:42px 1fr 120px;
   gap:8px;
   align-items:center;
   padding:10px 0;
@@ -331,8 +331,9 @@ body{
 .board-time small{
   display:block;
   color:#777;
-  font-size:11px;
+  font-size:10px;
   font-weight:800;
+  margin-top:2px;
 }
 
 .current-player{
@@ -356,8 +357,12 @@ body{
     height:135px;
   }
   .card h1{font-size:24px}
-  .time-big{font-size:62px}
+  .time-big{font-size:42px}
   .bin{font-size:17px}
+  .board-row{
+    grid-template-columns:36px 1fr 112px;
+    font-size:13px;
+  }
 }
 </style>
 </head>
@@ -386,7 +391,7 @@ body{
   <div class="stats">
     <div class="stat">
       <h3>เวลา</h3>
-      <p id="timerText">0.00s</p>
+      <p id="timerText">0.00 วิ</p>
     </div>
     <div class="stat">
       <h3>ข้อ</h3>
@@ -439,7 +444,7 @@ body{
     <div id="resultName" class="result-name">BG</div>
 
     <div class="result-label">เวลารวมของคุณ</div>
-    <div id="finalTime" class="time-big">0.00s</div>
+    <div id="finalTime" class="time-big">0.00 วิ</div>
 
     <div class="result-label">คะแนนรวม</div>
     <div id="finalScore" class="score-big">0 pts</div>
@@ -518,6 +523,17 @@ function calculateScore(correct, time, wrong){
   return (Number(correct) * 10) - Number(time) - (Number(wrong) * 5);
 }
 
+function formatTime(seconds){
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+
+  if(min > 0){
+    return min + " นาที " + sec.toFixed(2) + " วิ";
+  }
+
+  return sec.toFixed(2) + " วิ";
+}
+
 function showPage(id){
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -557,7 +573,7 @@ function startTimer(){
 
 function updateTimer(){
   const elapsed = (Date.now() - startTime) / 1000 + penaltySeconds;
-  document.getElementById("timerText").innerText = elapsed.toFixed(2) + "s";
+  document.getElementById("timerText").innerText = formatTime(elapsed);
 }
 
 function showQuestion(){
@@ -619,7 +635,7 @@ function endGame(){
 
   document.getElementById("progressBar").style.width = "100%";
   document.getElementById("resultName").innerText = playerName;
-  document.getElementById("finalTime").innerText = latestFinalTime.toFixed(2) + "s";
+  document.getElementById("finalTime").innerText = formatTime(latestFinalTime);
   document.getElementById("finalScore").innerText = latestScore.toFixed(1) + " pts";
   document.getElementById("correctResult").innerText = correctCount;
   document.getElementById("wrongResult").innerText = wrongCount;
@@ -721,7 +737,8 @@ function renderLeaderboard(scores){
     html += '<div class="board-name">' + escapeHTML(score.name || "BG") + '</div>';
     html += '<div class="board-time">' 
       + Number(score.calculatedScore).toFixed(1) + ' pts'
-      + '<small>' + Number(score.time).toFixed(2) + 's</small>'
+      + '<small>' + formatTime(Number(score.time)) + '</small>'
+      + '<small>ถูก ' + Number(score.correct) + ' | ผิด ' + Number(score.wrong) + '</small>'
       + '</div>';
     html += '</div>';
   });
