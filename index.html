@@ -237,6 +237,13 @@ body{
   margin:16px 0 20px;
 }
 
+.score-big{
+  color:var(--green-ci);
+  font-size:34px;
+  font-weight:900;
+  margin-bottom:18px;
+}
+
 .result-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -292,7 +299,7 @@ body{
 
 .board-row{
   display:grid;
-  grid-template-columns:42px 1fr 72px;
+  grid-template-columns:42px 1fr 88px;
   gap:8px;
   align-items:center;
   padding:10px 0;
@@ -318,6 +325,14 @@ body{
 .board-time{
   text-align:right;
   font-weight:900;
+  line-height:1.2;
+}
+
+.board-time small{
+  display:block;
+  color:#777;
+  font-size:11px;
+  font-weight:800;
 }
 
 .current-player{
@@ -352,14 +367,15 @@ body{
 
 <section id="startPage" class="page active">
   <img src="images/logo.png" class="game-logo" alt="แยกดีมีแต้ม Logo">
-  <div class="title">มาแข่งแยกขยะกัน!!</div>
+
+  <div class="title">แยกดีมีแต้ม</div>
   <div class="subtitle">Waste Sorting Time Challenge</div>
 
   <input id="playerInput" class="input" placeholder="ชื่อ / ทีม / แผนก">
 
   <div class="info">
     ภารกิจ: แยกขยะให้ครบทุกข้อ<br>
-    ใครใช้เวลาน้อยที่สุดเป็นผู้ชนะ<br>
+    ระบบจัดอันดับจากความถูกต้อง + ความเร็ว<br>
     ตอบผิดโดนบวกเวลา +2 วินาที
   </div>
 
@@ -425,6 +441,9 @@ body{
     <div class="result-label">เวลารวมของคุณ</div>
     <div id="finalTime" class="time-big">0.00s</div>
 
+    <div class="result-label">คะแนนรวม</div>
+    <div id="finalScore" class="score-big">0 pts</div>
+
     <div class="result-grid">
       <div>
         <strong id="correctResult">0</strong>
@@ -438,7 +457,7 @@ body{
   </div>
 
   <div class="note">
-    📸 แคปหน้าจอผลลัพธ์ เพื่อร่วมจัดอันดับผู้ใช้เวลาน้อยที่สุด
+    📸 แคปหน้าจอผลลัพธ์ เพื่อร่วมจัดอันดับจากความถูกต้อง + ความเร็ว
   </div>
 
   <div id="leaderboard" class="leaderboard">
@@ -493,6 +512,11 @@ let startTime = 0;
 let timerInterval = null;
 let locked = false;
 let latestFinalTime = 0;
+let latestScore = 0;
+
+function calculateScore(correct, time, wrong){
+  return (Number(correct) * 10) - Number(time) - (Number(wrong) * 5);
+}
 
 function showPage(id){
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
@@ -514,6 +538,7 @@ function startGame(){
   penaltySeconds = 0;
   locked = false;
   latestFinalTime = 0;
+  latestScore = 0;
 
   document.getElementById("leaderboard").innerHTML =
     '<div class="loading-board">กำลังบันทึกคะแนนและโหลดอันดับ...</div>';
@@ -590,10 +615,12 @@ function endGame(){
 
   const finalTime = (Date.now() - startTime) / 1000 + penaltySeconds;
   latestFinalTime = Number(finalTime.toFixed(2));
+  latestScore = calculateScore(correctCount, latestFinalTime, wrongCount);
 
   document.getElementById("progressBar").style.width = "100%";
   document.getElementById("resultName").innerText = playerName;
   document.getElementById("finalTime").innerText = latestFinalTime.toFixed(2) + "s";
+  document.getElementById("finalScore").innerText = latestScore.toFixed(1) + " pts";
   document.getElementById("correctResult").innerText = correctCount;
   document.getElementById("wrongResult").innerText = wrongCount;
 
@@ -607,6 +634,7 @@ function saveScoreAndLoadBoard(){
   formData.append("time", latestFinalTime);
   formData.append("correct", correctCount);
   formData.append("wrong", wrongCount);
+  formData.append("score", latestScore);
 
   fetch(API_URL, {
     method: "POST",
@@ -643,8 +671,26 @@ function renderLeaderboard(scores){
     return;
   }
 
-  const sortedScores = scores.sort((a, b) => {
-    if(Number(a.time) !== Number(b.time)) return Number(a.time) - Number(b.time);
+  const sortedScores = scores.map(score => {
+    const calculatedScore = calculateScore(
+      Number(score.correct),
+      Number(score.time),
+      Number(score.wrong)
+    );
+
+    return {
+      ...score,
+      calculatedScore: calculatedScore
+    };
+  }).sort((a, b) => {
+    if(Number(b.calculatedScore) !== Number(a.calculatedScore)){
+      return Number(b.calculatedScore) - Number(a.calculatedScore);
+    }
+
+    if(Number(a.time) !== Number(b.time)){
+      return Number(a.time) - Number(b.time);
+    }
+
     return Number(a.wrong) - Number(b.wrong);
   });
 
@@ -673,7 +719,10 @@ function renderLeaderboard(scores){
     html += '<div class="board-row ' + (isCurrent ? 'current-player' : '') + '">';
     html += '<div class="board-rank">#' + (index + 1) + '</div>';
     html += '<div class="board-name">' + escapeHTML(score.name || "BG") + '</div>';
-    html += '<div class="board-time">' + Number(score.time).toFixed(2) + 's</div>';
+    html += '<div class="board-time">' 
+      + Number(score.calculatedScore).toFixed(1) + ' pts'
+      + '<small>' + Number(score.time).toFixed(2) + 's</small>'
+      + '</div>';
     html += '</div>';
   });
 
