@@ -143,7 +143,7 @@ body{
 .card{
   border:4px solid var(--black);
   border-radius:26px;
-  padding:34px 12px;
+  padding:28px 12px;
   text-align:center;
   margin-bottom:18px;
 }
@@ -154,10 +154,18 @@ body{
   font-weight:900;
 }
 
+.trash-image{
+  width:160px;
+  height:160px;
+  object-fit:contain;
+  display:block;
+  margin:14px auto 10px;
+}
+
 .card h1{
-  font-size:42px;
+  font-size:36px;
   font-weight:900;
-  margin-top:10px;
+  margin-top:8px;
   word-break:keep-all;
 }
 
@@ -322,7 +330,11 @@ body{
 @media(max-width:360px){
   .app{padding:16px 12px}
   .game-logo{width:min(78vw,250px)}
-  .card h1{font-size:34px}
+  .trash-image{
+    width:135px;
+    height:135px;
+  }
+  .card h1{font-size:30px}
   .time-big{font-size:62px}
   .bin{font-size:17px}
 }
@@ -371,6 +383,7 @@ body{
 
   <div class="card">
     <small>ขยะชิ้นนี้คือ...</small>
+    <img id="trashImage" class="trash-image" src="" alt="">
     <h1 id="trashText">ก้างปลา</h1>
   </div>
 
@@ -437,32 +450,32 @@ body{
 const API_URL = "https://script.google.com/macros/s/AKfycbzU6JY7kzumQqsHCYGkDbjdDmXOmnLIbC958rzYVLu6FX7ly9k-pGqcg32BrEYMGcRw/exec";
 
 const questions = [
-  { item:"ก้างปลา", bin:"green" },
-  { item:"เศษข้าว", bin:"green" },
-  { item:"เปลือกกล้วย", bin:"green" },
-  { item:"เปลือกไข่", bin:"green" },
-  { item:"เศษผัก", bin:"green" },
+  { item:"ก้างปลา", bin:"green", image:"images/fishbone.png" },
+  { item:"เศษข้าว", bin:"green", image:"images/rice.png" },
+  { item:"เปลือกกล้วย", bin:"green", image:"images/banana-peel.png" },
+  { item:"เปลือกไข่", bin:"green", image:"images/eggshell.png" },
+  { item:"เศษผัก", bin:"green", image:"images/vegetable.png" },
 
-  { item:"ทิชชู่เปื้อนอาหาร", bin:"blue" },
-  { item:"ซองขนม", bin:"blue" },
-  { item:"หลอดพลาสติก", bin:"blue" },
-  { item:"กล่องโฟมเปื้อนอาหาร", bin:"blue" },
-  { item:"ถุงพลาสติกเปื้อนอาหาร", bin:"blue" },
+  { item:"ทิชชู่เปื้อนอาหาร", bin:"blue", image:"images/tissue.png" },
+  { item:"ซองขนม", bin:"blue", image:"images/snack-bag.png" },
+  { item:"หลอดพลาสติก", bin:"blue", image:"images/straw.png" },
+  { item:"กล่องโฟมเปื้อนอาหาร", bin:"blue", image:"images/foam-box.png" },
+  { item:"ถุงพลาสติกเปื้อนอาหาร", bin:"blue", image:"images/dirty-plastic-bag.png" },
 
-  { item:"ขวดน้ำพลาสติก", bin:"yellow" },
-  { item:"กระป๋องอลูมิเนียม", bin:"yellow" },
-  { item:"กระดาษสะอาด", bin:"yellow" },
-  { item:"กล่องกระดาษสะอาด", bin:"yellow" },
-  { item:"ขวดแก้ว", bin:"yellow" },
+  { item:"ขวดน้ำพลาสติก", bin:"yellow", image:"images/plastic-bottle.png" },
+  { item:"กระป๋องอลูมิเนียม", bin:"yellow", image:"images/aluminum-can.png" },
+  { item:"กระดาษสะอาด", bin:"yellow", image:"images/paper.png" },
+  { item:"กล่องกระดาษสะอาด", bin:"yellow", image:"images/paper-box.png" },
+  { item:"ขวดแก้ว", bin:"yellow", image:"images/glass-bottle.png" },
 
-  { item:"ถ่านไฟฉาย", bin:"redChemical" },
-  { item:"หลอดไฟเสีย", bin:"redChemical" },
-  { item:"กระป๋องสเปรย์", bin:"redChemical" },
-  { item:"ขวดน้ำยาทำความสะอาด", bin:"redChemical" },
+  { item:"ถ่านไฟฉาย", bin:"redChemical", image:"images/battery.png" },
+  { item:"หลอดไฟเสีย", bin:"redChemical", image:"images/lightbulb.png" },
+  { item:"กระป๋องสเปรย์", bin:"redChemical", image:"images/spray-can.png" },
+  { item:"ขวดน้ำยาทำความสะอาด", bin:"redChemical", image:"images/cleaning-bottle.png" },
 
-  { item:"หน้ากากอนามัยใช้แล้ว", bin:"redInfectious" },
-  { item:"ถุงมือเปื้อนสารคัดหลั่ง", bin:"redInfectious" },
-  { item:"สำลีเปื้อนเลือด", bin:"redInfectious" }
+  { item:"หน้ากากอนามัยใช้แล้ว", bin:"redInfectious", image:"images/mask.png" },
+  { item:"ถุงมือเปื้อนสารคัดหลั่ง", bin:"redInfectious", image:"images/gloves.png" },
+  { item:"สำลีเปื้อนเลือด", bin:"redInfectious", image:"images/bloody-cotton.png" }
 ];
 
 let playerName = "BG";
@@ -526,7 +539,11 @@ function showQuestion(){
   locked = false;
 
   const current = shuffledQuestions[currentIndex];
+
   document.getElementById("trashText").innerText = current.item;
+  document.getElementById("trashImage").src = current.image;
+  document.getElementById("trashImage").alt = current.item;
+
   document.getElementById("questionCount").innerText =
     (currentIndex + 1) + "/" + shuffledQuestions.length;
   document.getElementById("wrongCount").innerText = wrongCount;
