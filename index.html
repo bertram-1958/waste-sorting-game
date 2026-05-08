@@ -254,6 +254,71 @@ body{
   margin-bottom:14px;
 }
 
+.leaderboard{
+  border:3px solid var(--black);
+  border-radius:22px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.board-title{
+  text-align:center;
+  font-size:24px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.rank-note{
+  text-align:center;
+  color:var(--green-ci);
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:14px;
+}
+
+.board-row{
+  display:grid;
+  grid-template-columns:42px 1fr 72px;
+  gap:8px;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid var(--gray);
+  font-size:15px;
+}
+
+.board-row:last-child{
+  border-bottom:none;
+}
+
+.board-rank{
+  font-weight:900;
+}
+
+.board-name{
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.board-time{
+  text-align:right;
+  font-weight:900;
+}
+
+.current-player{
+  background:#fbfff4;
+  border-radius:12px;
+  padding-left:8px;
+  padding-right:8px;
+}
+
+.loading-board{
+  text-align:center;
+  color:#777;
+  font-weight:900;
+}
+
 @media(max-width:360px){
   .app{padding:16px 12px}
   .game-logo{width:min(78vw,250px)}
@@ -358,6 +423,10 @@ body{
     📸 แคปหน้าจอผลลัพธ์ เพื่อร่วมจัดอันดับผู้ใช้เวลาน้อยที่สุด
   </div>
 
+  <div id="leaderboard" class="leaderboard">
+    <div class="loading-board">กำลังบันทึกคะแนนและโหลดอันดับ...</div>
+  </div>
+
   <button class="btn primary" onclick="restartGame()">เล่นอีกครั้ง</button>
   <button class="btn secondary" onclick="goToStart()">กลับหน้าแรก</button>
 </section>
@@ -365,6 +434,8 @@ body{
 </div>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyuWi4_YfwyulJOBAuwDblWHTunoYLkiYzDSyoKBna7y-UUmMJ8qMFDlRfIPYg_U7Vf/exec";
+
 const questions = [
   { item:"ก้างปลา", bin:"green" },
   { item:"เศษข้าว", bin:"green" },
@@ -403,6 +474,7 @@ let penaltySeconds = 0;
 let startTime = 0;
 let timerInterval = null;
 let locked = false;
+let latestFinalTime = 0;
 
 function showPage(id){
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
@@ -423,6 +495,10 @@ function startGame(){
   wrongCount = 0;
   penaltySeconds = 0;
   locked = false;
+  latestFinalTime = 0;
+
+  document.getElementById("leaderboard").innerHTML =
+    '<div class="loading-board">กำลังบันทึกคะแนนและโหลดอันดับ...</div>';
 
   startTime = Date.now();
 
@@ -491,14 +567,104 @@ function endGame(){
   clearInterval(timerInterval);
 
   const finalTime = (Date.now() - startTime) / 1000 + penaltySeconds;
+  latestFinalTime = Number(finalTime.toFixed(2));
 
   document.getElementById("progressBar").style.width = "100%";
   document.getElementById("resultName").innerText = playerName;
-  document.getElementById("finalTime").innerText = finalTime.toFixed(2) + "s";
+  document.getElementById("finalTime").innerText = latestFinalTime.toFixed(2) + "s";
   document.getElementById("correctResult").innerText = correctCount;
   document.getElementById("wrongResult").innerText = wrongCount;
 
   showPage("resultPage");
+  saveScoreAndLoadBoard();
+}
+
+function saveScoreAndLoadBoard(){
+  const formData = new URLSearchParams();
+  formData.append("name", playerName);
+  formData.append("time", latestFinalTime);
+  formData.append("correct", correctCount);
+  formData.append("wrong", wrongCount);
+
+  fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: formData
+  });
+
+  setTimeout(loadLeaderboard, 1200);
+}
+
+function loadLeaderboard(){
+  const callbackName = "leaderboardCallback_" + Date.now();
+
+  window[callbackName] = function(scores){
+    renderLeaderboard(scores);
+    delete window[callbackName];
+    script.remove();
+  };
+
+  const script = document.createElement("script");
+  script.src = API_URL + "?callback=" + callbackName + "&t=" + Date.now();
+  script.onerror = function(){
+    document.getElementById("leaderboard").innerHTML =
+      '<div class="loading-board">โหลดอันดับไม่สำเร็จ แต่คะแนนอาจถูกบันทึกแล้ว</div>';
+  };
+
+  document.body.appendChild(script);
+}
+
+function renderLeaderboard(scores){
+  if(!Array.isArray(scores) || scores.length === 0){
+    document.getElementById("leaderboard").innerHTML =
+      '<div class="loading-board">ยังไม่มีข้อมูลอันดับ</div>';
+    return;
+  }
+
+  const sortedScores = scores.sort((a, b) => {
+    if(Number(a.time) !== Number(b.time)) return Number(a.time) - Number(b.time);
+    return Number(a.wrong) - Number(b.wrong);
+  });
+
+  let playerRank = sortedScores.findIndex(score =>
+    score.name === playerName &&
+    Number(score.time).toFixed(2) === latestFinalTime.toFixed(2) &&
+    Number(score.correct) === correctCount &&
+    Number(score.wrong) === wrongCount
+  ) + 1;
+
+  if(playerRank === 0){
+    playerRank = sortedScores.length;
+  }
+
+  let html = '';
+  html += '<div class="board-title">Leaderboard</div>';
+  html += '<div class="rank-note">คุณอยู่อันดับที่ ' + playerRank + ' จาก ' + sortedScores.length + ' คน</div>';
+
+  sortedScores.slice(0,10).forEach((score, index) => {
+    const isCurrent =
+      score.name === playerName &&
+      Number(score.time).toFixed(2) === latestFinalTime.toFixed(2) &&
+      Number(score.correct) === correctCount &&
+      Number(score.wrong) === wrongCount;
+
+    html += '<div class="board-row ' + (isCurrent ? 'current-player' : '') + '">';
+    html += '<div class="board-rank">#' + (index + 1) + '</div>';
+    html += '<div class="board-name">' + escapeHTML(score.name || "BG") + '</div>';
+    html += '<div class="board-time">' + Number(score.time).toFixed(2) + 's</div>';
+    html += '</div>';
+  });
+
+  document.getElementById("leaderboard").innerHTML = html;
+}
+
+function escapeHTML(text){
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function restartGame(){
